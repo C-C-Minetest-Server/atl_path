@@ -99,7 +99,7 @@ local function drop_attached_node(pos)
 	end
 end
 
-local function override_shovel_tools()
+minetest.register_on_mods_loaded(function()
     for name, def in pairs(minetest.registered_items) do
         if def.groups and def.groups.shovel == 1 then
             local uses = 100
@@ -144,6 +144,4 @@ local function override_shovel_tools()
             })
         end
     end
-end
-
-override_shovel_tools()
+end)
