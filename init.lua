@@ -64,24 +64,20 @@ local function override_shovel_tools()
                         local node_def = minetest.registered_nodes[node.name]
 
                         if node_def and node_def.groups and node_def.groups.soil == 1 then
-                            if node.name ~= "default:sand" and
-                               node.name ~= "default:desert_sand" and
-                               node.name ~= "default:silver_sand" then
-                                local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
-                                local node_above = minetest.get_node(pos_above)
-                                local node_above_def = minetest.registered_nodes[node_above.name]
+                            local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
+                            local node_above = minetest.get_node(pos_above)
+                            local node_above_def = minetest.registered_nodes[node_above.name]
 
-                                if node_above_def and (node_above_def.groups.flora == 1 or node_above_def.groups.mushroom == 1) then
-                                    minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                                    itemstack:add_wear(wear)
-                                    minetest.remove_node(pos_above)
-                                    minetest.add_item(pos_above, node_above.name)
-                                elseif node_above.name == "air" then
-                                    minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                                    itemstack:add_wear(wear)
-                                else
-                                    return itemstack
-                                end
+                            if node_above_def and (node_above_def.groups.flora == 1 or node_above_def.groups.mushroom == 1) then
+                                minetest.set_node(pos, {name = "atl_path:path_dirt"})
+                                itemstack:add_wear(wear)
+                                minetest.remove_node(pos_above)
+                                minetest.add_item(pos_above, node_above.name)
+                            elseif node_above.name == "air" then
+                                minetest.set_node(pos, {name = "atl_path:path_dirt"})
+                                itemstack:add_wear(wear)
+                            else
+                                return itemstack
                             end
                         end
                     end
