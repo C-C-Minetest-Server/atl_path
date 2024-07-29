@@ -46,24 +46,15 @@ minetest.register_node("atl_path:path_dirt", {
     sounds = default.node_sound_dirt_defaults()
 })
 
-local function calculate_wear(uses)
-    return math.floor(65535 / (uses*10))
-end
-
 local function override_shovel_tools()
     for name, def in pairs(minetest.registered_items) do
         if def.groups and def.groups.shovel == 1 then
             local uses = 100
             if def.tool_capabilities and def.tool_capabilities.groupcaps and def.tool_capabilities.groupcaps.crumbly then
-                for _, cap in pairs(def.tool_capabilities.groupcaps.crumbly) do
-                    if type(cap) == "table" and cap.uses then
-                        uses = cap.uses
-                        break
-                    end
-                end
+                uses = def.tool_capabilities.groupcaps.crumbly.uses or 100
             end
 
-            local wear = calculate_wear(uses)
+            local wear = minetest.get_tool_wear_after_use(uses)
 
             minetest.override_item(name, {
                 on_place = function(itemstack, user, pointed_thing)
