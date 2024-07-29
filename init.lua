@@ -46,6 +46,25 @@ minetest.register_node("atl_path:path_dirt", {
     sounds = default.node_sound_dirt_defaults()
 })
 
+local function is_attached_bottom(pos)
+    local node_above_def = minetest.registered_nodes[node_above]
+    local paramtype2 = node_above_def and node_above_def.paramtype2 or "none"
+    local attach_group = minetest.get_item_group(node_above.name, "attached_node")
+
+    if attach_group == 3 then
+        return true
+    elseif attach_group == 1
+        and paramtype2 == "wallmounted"
+        and minetest.wallmounted_to_dir(node_above.param2).y == -1 then
+        return true
+    elseif attach_group == 2
+        and paramtype2 == "facedir" -- 4dir won't attach to bottom
+        and minetest.facedir_to_dir(node_above.param2).y == -1 then
+        return true
+    end
+    return false
+end
+
 local function override_shovel_tools()
     for name, def in pairs(minetest.registered_items) do
         if def.groups and def.groups.shovel == 1 then
@@ -58,27 +77,27 @@ local function override_shovel_tools()
 
             minetest.override_item(name, {
                 on_place = function(itemstack, user, pointed_thing)
-                    if pointed_thing.type == "node" then
-                        local pos = pointed_thing.under
-                        local node = minetest.get_node(pos)
-                        local node_def = minetest.registered_nodes[node.name]
+                    if pointed_thing.type ~= "node" then
+                        return itemstack
+                    end
 
-                        if node_def and node_def.groups and node_def.groups.soil == 1 then
-                            local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
-                            local node_above = minetest.get_node(pos_above)
-                            local node_above_def = minetest.registered_nodes[node_above.name]
+                    local pos = pointed_thing.under
+                    local node = minetest.get_node(pos)
+                    local node_def = minetest.registered_nodes[node.name]
 
-                            if node_above_def and (node_above_def.groups.flora == 1 or node_above_def.groups.mushroom == 1) then
-                                minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                                itemstack:add_wear(wear)
-                                minetest.remove_node(pos_above)
-                                minetest.add_item(pos_above, node_above.name)
-                            elseif node_above.name == "air" then
-                                minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                                itemstack:add_wear(wear)
-                            else
-                                return itemstack
-                            end
+                    if node_def and node_def.groups and node_def.groups.soil == 1 then
+                        local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
+                        local node_above = minetest.get_node(pos_above)
+                        if is_attached_bottom(pos_above) then
+                            minetest.set_node(pos, {name = "atl_path:path_dirt"})
+                            itemstack:add_wear(wear)
+                            minetest.remove_node(pos_above)
+                            minetest.add_item(pos_above, node_above.name)
+                        elseif node_above.name == "air" then
+                            minetest.set_node(pos, {name = "atl_path:path_dirt"})
+                            itemstack:add_wear(wear)
+                        else
+                            return itemstack
                         end
                     end
                     return itemstack
