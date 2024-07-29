@@ -118,9 +118,9 @@ minetest.register_on_mods_loaded(function()
                     local pos = pointed_thing.under
                     local node = minetest.get_node(pos)
                     local node_def = minetest.registered_nodes[node.name]
+                    local name = user:get_player_name()
 
                     if node_def and node_def.groups and node_def.groups.soil == 1 then
-                        local name = user:get_player_name()
                         if minetest.is_protected(pos, name) then
                             minetest.record_protection_violation(pos, name)
                             return itemstack
@@ -137,7 +137,9 @@ minetest.register_on_mods_loaded(function()
                             return itemstack
                         end
                         minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                        itemstack:add_wear(wear)
+                        if not minetest.is_creative_enabled(name) then
+                            itemstack:add_wear(wear)
+                        end
                     end
                     return itemstack
                 end
