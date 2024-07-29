@@ -95,6 +95,11 @@ local function shovel_on_place(itemstack, user, pointed_thing)
     if pointed_thing.type ~= "node" then
         return itemstack
     end
+    local pos = pointed_thing.under
+    if vector.subtract(pointed_thing.above, pos).y ~= 1 then
+        -- only allow from top
+        return itemstack
+    end
 
     local tool_def = minetest.registered_tools[itemstack:get_name()]
     local uses = 100
@@ -105,7 +110,6 @@ local function shovel_on_place(itemstack, user, pointed_thing)
     end
     local wear = minetest.get_tool_wear_after_use(uses)
 
-    local pos = pointed_thing.under
     local node = minetest.get_node(pos)
     local node_def = minetest.registered_nodes[node.name]
     local name = user:get_player_name()
