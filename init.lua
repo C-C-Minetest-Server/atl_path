@@ -67,6 +67,38 @@ local function is_attached_bottom(pos)
     return false
 end
 
+-- For some reason MT engine does not expose this function
+-- Found in builtin/game/faling.lua
+local function drop_attached_node(pos)
+	local n = minetest.get_node(pos)
+	local drops = minetest.get_node_drops(n, "")
+	local def = minetest.registered_items[n.name]
+	if def and def.preserve_metadata then
+		local oldmeta = minetest.get_meta(pos):to_table().fields
+		-- Copy pos and node because the callback can modify them.
+		local pos_copy = vector.copy(pos)
+		local node_copy = {name=n.name, param1=n.param1, param2=n.param2}
+		local drop_stacks = {}
+		for k, v in pairs(drops) do
+			drop_stacks[k] = ItemStack(v)
+		end
+		drops = drop_stacks
+		def.preserve_metadata(pos_copy, node_copy, oldmeta, drops)
+	end
+	if def and def.sounds and def.sounds.fall then
+		minetest.sound_play(def.sounds.fall, {pos = pos}, true)
+	end
+	minetest.remove_node(pos)
+	for _, item in pairs(drops) do
+		local pos = {
+			x = pos.x + math.random()/2 - 0.25,
+			y = pos.y + math.random()/2 - 0.25,
+			z = pos.z + math.random()/2 - 0.25,
+		}
+		minetest.add_item(pos, item)
+	end
+end
+
 local function override_shovel_tools()
     for name, def in pairs(minetest.registered_items) do
         if def.groups and def.groups.shovel == 1 then
@@ -88,19 +120,24 @@ local function override_shovel_tools()
                     local node_def = minetest.registered_nodes[node.name]
 
                     if node_def and node_def.groups and node_def.groups.soil == 1 then
+                        local name = user:get_player_name()
+                        if minetest.is_protected(pos, name) then
+                            minetest.record_protection_violation(pos, name)
+                            return itemstack
+                        end
                         local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
                         local node_above = minetest.get_node(pos_above)
                         if is_attached_bottom(pos_above) then
-                            minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                            itemstack:add_wear(wear)
-                            minetest.remove_node(pos_above)
-                            minetest.add_item(pos_above, node_above.name)
-                        elseif node_above.name == "air" then
-                            minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                            itemstack:add_wear(wear)
-                        else
+                            if minetest.is_protected(pos_above, name) then
+                                minetest.record_protection_violation(pos_above, name)
+                                return itemstack
+                            end
+                            drop_attached_node(pos_above)
+                        elseif node_above.name ~= "air" then
                             return itemstack
                         end
+                        minetest.set_node(pos, {name = "atl_path:path_dirt"})
+                        itemstack:add_wear(wear)
                     end
                     return itemstack
                 end
