@@ -91,50 +91,54 @@ local function drop_attached_node(pos)
 	end
 end
 
-minetest.register_on_mods_loaded(function()
-    for name, def in pairs(minetest.registered_items) do
-        if def.groups and def.groups.shovel == 1 then
-            local uses = 100
-            if def.tool_capabilities and def.tool_capabilities.groupcaps and def.tool_capabilities.groupcaps.crumbly then
-                uses = def.tool_capabilities.groupcaps.crumbly.uses or 100
+local function shovel_on_place(itemstack, user, pointed_thing)
+    if pointed_thing.type ~= "node" then
+        return itemstack
+    end
+
+    local tool_def = minetest.registered_tools[itemstack:get_name()]
+    local uses = 100
+    if tool_def.tool_capabilities
+        and tool_def.tool_capabilities.groupcaps
+        and tool_def.tool_capabilities.groupcaps.crumbly then
+        uses = tool_def.tool_capabilities.groupcaps.crumbly.uses or 100
+    end
+    local wear = minetest.get_tool_wear_after_use(uses)
+
+    local pos = pointed_thing.under
+    local node = minetest.get_node(pos)
+    local node_def = minetest.registered_nodes[node.name]
+    local name = user:get_player_name()
+
+    if node_def and node_def.groups and node_def.groups.soil == 1 then
+        if minetest.is_protected(pos, name) then
+            minetest.record_protection_violation(pos, name)
+            return itemstack
+        end
+        local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
+        local node_above = minetest.get_node(pos_above)
+        if is_attached_bottom(pos_above) then
+            if minetest.is_protected(pos_above, name) then
+                minetest.record_protection_violation(pos_above, name)
+                return itemstack
             end
+            drop_attached_node(pos_above)
+        elseif node_above.name ~= "air" then
+            return itemstack
+        end
+        minetest.set_node(pos, {name = "atl_path:path_dirt"})
+        if not minetest.is_creative_enabled(name) then
+            itemstack:add_wear(wear)
+        end
+    end
+    return itemstack
+end
 
-            local wear = minetest.get_tool_wear_after_use(uses)
-
+minetest.register_on_mods_loaded(function()
+    for name, def in pairs(minetest.registered_tools) do
+        if def.groups and def.groups.shovel == 1 then
             minetest.override_item(name, {
-                on_place = function(itemstack, user, pointed_thing)
-                    if pointed_thing.type ~= "node" then
-                        return itemstack
-                    end
-
-                    local pos = pointed_thing.under
-                    local node = minetest.get_node(pos)
-                    local node_def = minetest.registered_nodes[node.name]
-                    local name = user:get_player_name()
-
-                    if node_def and node_def.groups and node_def.groups.soil == 1 then
-                        if minetest.is_protected(pos, name) then
-                            minetest.record_protection_violation(pos, name)
-                            return itemstack
-                        end
-                        local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
-                        local node_above = minetest.get_node(pos_above)
-                        if is_attached_bottom(pos_above) then
-                            if minetest.is_protected(pos_above, name) then
-                                minetest.record_protection_violation(pos_above, name)
-                                return itemstack
-                            end
-                            drop_attached_node(pos_above)
-                        elseif node_above.name ~= "air" then
-                            return itemstack
-                        end
-                        minetest.set_node(pos, {name = "atl_path:path_dirt"})
-                        if not minetest.is_creative_enabled(name) then
-                            itemstack:add_wear(wear)
-                        end
-                    end
-                    return itemstack
-                end
+                on_place = shovel_on_place
             })
         end
     end
