@@ -82,12 +82,11 @@ local function drop_attached_node(pos)
 	end
 	minetest.remove_node(pos)
 	for _, item in pairs(drops) do
-		local pos = {
+		minetest.add_item({
 			x = pos.x + math.random()/2 - 0.25,
 			y = pos.y + math.random()/2 - 0.25,
 			z = pos.z + math.random()/2 - 0.25,
-		}
-		minetest.add_item(pos, item)
+		}, item)
 	end
 end
 
