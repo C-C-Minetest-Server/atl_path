@@ -1,6 +1,7 @@
+local S = minetest.get_translator("atl_path")
+
 minetest.register_node("atl_path:path_dirt", {
-    description = "Dirt Path",
-    short_description = "Dirt Path",
+    description = S("Dirt Path"),
     drawtype = "nodebox",
     tiles = {
         "atl_dirt_path_top.png",
