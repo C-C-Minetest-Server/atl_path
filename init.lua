@@ -33,14 +33,6 @@ minetest.register_node("atl_path:path_dirt", {
         type = "fixed",
         fixed = { -1 / 2, -1 / 2, -1 / 2, 1 / 2, 1 / 2 - 1 / 16, 1 / 2 },
     },
-    collision_box = {
-        type = "fixed",
-        fixed = { -1 / 2, -1 / 2, -1 / 2, 1 / 2, 1 / 2 - 1 / 16, 1 / 2 },
-    },
-    selection_box = {
-        type = "fixed",
-        fixed = { -1 / 2, -1 / 2, -1 / 2, 1 / 2, 1 / 2 - 1 / 16, 1 / 2 },
-    },
     drop = "default:dirt",
     groups = { no_silktouch = 1, crumbly = 3, not_in_creative_inventory = 1 },
     sounds = default.node_sound_dirt_defaults()
