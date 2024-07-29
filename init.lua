@@ -47,19 +47,21 @@ minetest.register_node("atl_path:path_dirt", {
 })
 
 local function is_attached_bottom(pos)
-    local node_above_def = minetest.registered_nodes[node_above]
-    local paramtype2 = node_above_def and node_above_def.paramtype2 or "none"
-    local attach_group = minetest.get_item_group(node_above.name, "attached_node")
+    local node = minetest.get_node(pos)
+    local def = minetest.registered_nodes[pos]
+    local paramtype2 = def and def.paramtype2 or "none"
+    local attach_group = minetest.get_item_group(node.name, "attached_node")
 
     if attach_group == 3 then
         return true
-    elseif attach_group == 1
-        and paramtype2 == "wallmounted"
-        and minetest.wallmounted_to_dir(node_above.param2).y == -1 then
+    elseif attach_group == 1 then
+        if paramtype2 == "wallmounted" then
+            return minetest.wallmounted_to_dir(node.param2).y == -1
+        end
         return true
     elseif attach_group == 2
         and paramtype2 == "facedir" -- 4dir won't attach to bottom
-        and minetest.facedir_to_dir(node_above.param2).y == -1 then
+        and minetest.facedir_to_dir(node.param2).y == -1 then
         return true
     end
     return false
