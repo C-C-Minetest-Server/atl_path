@@ -64,7 +64,7 @@ end
 local function drop_attached_node(pos)
 	local n = minetest.get_node(pos)
 	local drops = minetest.get_node_drops(n, "")
-	local def = minetest.registered_items[n.name]
+	local def = minetest.registered_nodes[n.name]
 	if def and def.preserve_metadata then
 		local oldmeta = minetest.get_meta(pos):to_table().fields
 		-- Copy pos and node because the callback can modify them.
@@ -88,6 +88,16 @@ local function drop_attached_node(pos)
 			z = pos.z + math.random()/2 - 0.25,
 		}, item)
 	end
+end
+
+local function play_node_dig_sound(pos)
+    local node = minetest.get_node(pos)
+    local def = minetest.registered_nodes[node.name]
+    local spec = def and def.sounds and def.sounds.dig or "__group"
+    if spec == "__group" then
+        spec = { name = "default_dig_crumbly", gain = 0.5 }
+    end
+    minetest.sound_play(spec, { pos = pos }, true)
 end
 
 local function shovel_on_place(itemstack, user, pointed_thing)
@@ -129,6 +139,7 @@ local function shovel_on_place(itemstack, user, pointed_thing)
         elseif node_above.name ~= "air" then
             return itemstack
         end
+        play_node_dig_sound(pos)
         minetest.set_node(pos, {name = "atl_path:path_dirt"})
         if not minetest.is_creative_enabled(name) then
             itemstack:add_wear(wear)
