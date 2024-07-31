@@ -105,6 +105,11 @@ local function shovel_on_place(itemstack, user, pointed_thing)
         return itemstack
     end
     local pos = pointed_thing.under
+    local under_node = minetest.get_node(pos)
+    local under_def = minetest.registered_nodes[under_node.name]
+    if under_def and under_def.on_rightclick then
+        return under_def.on_rightclick(pos, under_node, user, itemstack, pointed_thing)
+    end
     if vector.subtract(pointed_thing.above, pos).y ~= 1 then
         -- only allow from top
         return itemstack
